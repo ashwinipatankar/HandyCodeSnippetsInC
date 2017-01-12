@@ -28,21 +28,16 @@ static void fetchUserInput(int *user_input) {
 	scanf("%d", user_input);
 
 }
-
-static void *fn_transmitter(void *ptr) {
-	int user_input;
-	fetchUserInput(&user_input);
-	printf("You entered %d\n", user_input);
-	return NULL;
-}
-
 #define PORTNUMBER 5000
-void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
 
-	if ((*socket_id = socket(AF_INET, SOCK_STREAM, 0)) == -1 ) {
+void __initSocketId(int *socket_id) {
+	if ((*socket_id = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("Socket");
 		exit(1);
 	}
+}
+
+void __initSocketConfiguration(struct sockaddr_in *socket_address) {
 
 	socket_address->sin_family = AF_INET;
 	socket_address->sin_port = htons(PORTNUMBER);
@@ -50,11 +45,37 @@ void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
 	bzero(&(socket_address->sin_zero), 8);
 }
 
-int main(void) {
+#define NUMBEROFCONNECTIONS 5
+
+void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
+
+	__initSocketId(socket_id);
+
+	__initSocketConfiguration(socket_address);
 
 
-	pthread_t th_receiver, th_transmitter;
-	int return_thread_receiver, return_thread_transmitter;
+	if (bind(*socket_id, (struct sockaddr *)socket_address, sizeof(struct sockaddr))==-1) {
+		perror("Unable to bind");
+		exit(1);
+	}
+
+	if (listen(*socket_id, NUMBEROFCONNECTIONS)==-1) {
+		perror("Listen");
+		exit(1);
+	}
+
+	printf("TCP server waiting for client on port 5000");
+	fflush(stdout);
+
+
+}
+
+static void *fn_transmitter(void *ptr) {
+	int user_input;
+	fetchUserInput(&user_input);
+	printf("You entered %d\n", user_input);
+
+
 	int sk_transmitter, sk_receiver;
 
 //	initTCPSocket(&sk_tra¿nsmitter);
@@ -65,30 +86,6 @@ int main(void) {
 	int sin_size;
 
 	initTCPSocket(&sock , &server_addr);
-#if 0
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("Socket");
-		exit(1);
-	}
-#endif
-
-//	server_addr.sin_family = AF_INET;
-//	server_addr.sin_port = htons(5000);
-//	server_addr.sin_addr.s_addr = INADDR_ANY;
-//	bzero(&(server_addr.sin_zero), 8);
-
-	if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))==-1) {
-		perror("Unable to bind");
-		exit(1);
-	}
-
-	if (listen(sock, 5)==-1) {
-		perror("Listen");
-		exit(1);
-	}
-
-	printf("TCP server waiting for client on port 5000");
-	fflush(stdout);
 
 	while (1) {
 		sin_size = sizeof(struct sockaddr_in);
@@ -125,6 +122,16 @@ int main(void) {
 
 		close (sock);
 	}
+	return NULL;
+}
+
+
+int main(void) {
+
+
+	pthread_t th_receiver, th_transmitter;
+	int return_thread_receiver, return_thread_transmitter;
+
 	return_thread_receiver  = pthread_create(&th_receiver, NULL, fn_receiver, NULL);
 	return_thread_transmitter  = pthread_create(&th_transmitter, NULL, fn_transmitter, NULL);
 
