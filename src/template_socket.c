@@ -15,20 +15,67 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
+
+
+#define NUMBEROFCONNECTIONS 5
+#define PORTNUMBER 5000
 
 static void *fn_receiver(void *ptr) {
-	printf("Hello world from thread 1\n");
+	int sock, bytes_recieved;
+	char send_data[1024], recv_data[1024];
+	struct hostent *host;
+	struct sockaddr_in server_addr;
+
+	host = gethostbyname("127.0.0.1");
+
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("Socket");
+		exit(1);
+	}
+
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(5000);
+	server_addr.sin_addr = *((struct in_addr *) host->h_addr);
+	bzero(&(server_addr.sin_zero), 8);
+
+	if (connect(sock, (struct sockaddr *) &server_addr, sizeof(struct sockaddr))
+			== -1) {
+		perror("Connect");
+		exit(1);
+	}
+
+	while (1) {
+
+		bytes_recieved = recv(sock, recv_data, 1024, 0);
+		recv_data[bytes_recieved] = '\0';
+
+		if (strcmp(recv_data, "q") == 0 || strcmp(recv_data, "Q") == 0) {
+			close(sock);
+			break;
+		}
+
+		else
+			printf("\nRecieved data = %s ", recv_data);
+
+		printf("\nSEND (q or Q to quit) : ");
+		gets(send_data);
+
+		if (strcmp(send_data, "q") != 0 && strcmp(send_data, "Q") != 0)
+			send(sock, send_data, strlen(send_data), 0);
+
+		else {
+			send(sock, send_data, strlen(send_data), 0);
+			close(sock);
+			break;
+		}
+
+	}
 	return NULL;
-
 }
 
-static void fetchUserInput(int *user_input) {
-	printf("enter any number: ");
-	scanf("%d", user_input);
-
-}
-#define PORTNUMBER 5000
 
 void __initSocketId(int *socket_id) {
 	if ((*socket_id = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -45,7 +92,7 @@ void __initSocketConfiguration(struct sockaddr_in *socket_address) {
 	bzero(&(socket_address->sin_zero), 8);
 }
 
-#define NUMBEROFCONNECTIONS 5
+
 
 void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
 
@@ -71,14 +118,8 @@ void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
 }
 
 static void *fn_transmitter(void *ptr) {
-	int user_input;
-	fetchUserInput(&user_input);
-	printf("You entered %d\n", user_input);
-
-
 	int sk_transmitter, sk_receiver;
 
-//	initTCPSocket(&sk_tra¿nsmitter);
 	int sock, connected, bytes_received, true=1;
 	char send_data[1024], recv_data[1024];
 
@@ -106,18 +147,6 @@ static void *fn_transmitter(void *ptr) {
 				send(connected, send_data, strlen(send_data), 0);
 			}
 
-			bytes_received = recv(connected, recv_data, 1024, 0);
-
-			recv_data[bytes_received]='\0';
-
-			if (strcmp(recv_data, "q") == 0 || strcmp(recv_data, "Q")==0) {
-				close (connected);
-				break;
-			}
-			else {
-				printf("\nRECEIVED DATA = %s", recv_data);
-				fflush(stdout);
-			}
 		}
 
 		close (sock);
@@ -132,8 +161,10 @@ int main(void) {
 	pthread_t th_receiver, th_transmitter;
 	int return_thread_receiver, return_thread_transmitter;
 
-	return_thread_receiver  = pthread_create(&th_receiver, NULL, fn_receiver, NULL);
 	return_thread_transmitter  = pthread_create(&th_transmitter, NULL, fn_transmitter, NULL);
+	sleep(1);
+	return_thread_receiver  = pthread_create(&th_receiver, NULL, fn_receiver, NULL);
+
 
 	pthread_join(th_receiver, NULL);
 	pthread_join(th_transmitter, NULL);
