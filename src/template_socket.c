@@ -36,13 +36,18 @@ static void *fn_transmitter(void *ptr) {
 	return NULL;
 }
 
-
-void initTCPSocket(int *socket_id) {
+#define PORTNUMBER 5000
+void initTCPSocket(int *socket_id, struct sockaddr_in *socket_address) {
 
 	if ((*socket_id = socket(AF_INET, SOCK_STREAM, 0)) == -1 ) {
 		perror("Socket");
 		exit(1);
 	}
+
+	socket_address->sin_family = AF_INET;
+	socket_address->sin_port = htons(PORTNUMBER);
+	socket_address->sin_addr.s_addr = INADDR_ANY;
+	bzero(&(socket_address->sin_zero), 8);
 }
 
 int main(void) {
@@ -52,22 +57,25 @@ int main(void) {
 	int return_thread_receiver, return_thread_transmitter;
 	int sk_transmitter, sk_receiver;
 
-	initTCPSocket(&sk_transmitter);
+//	initTCPSocket(&sk_tra¿nsmitter);
 	int sock, connected, bytes_received, true=1;
 	char send_data[1024], recv_data[1024];
 
 	struct sockaddr_in server_addr, client_addr;
 	int sin_size;
 
+	initTCPSocket(&sock , &server_addr);
+#if 0
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("Socket");
 		exit(1);
 	}
+#endif
 
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(5000);
-	server_addr.sin_addr.s_addr = INADDR_ANY;
-	bzero(&(server_addr.sin_zero), 8);
+//	server_addr.sin_family = AF_INET;
+//	server_addr.sin_port = htons(5000);
+//	server_addr.sin_addr.s_addr = INADDR_ANY;
+//	bzero(&(server_addr.sin_zero), 8);
 
 	if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))==-1) {
 		perror("Unable to bind");
