@@ -35,6 +35,12 @@ LIBS=
 EXECUTABLE=./bin/lookupex
 endif
 
+ifdef UTILITY
+SOURCES= src/utility_functions.c src/template_utilityfunctions.c
+LIBS=
+EXECUTABLE=./bin/utility
+endif
+
 #SOURCES=$(wildcard *.c $(SRC)/*.c )
 CFLAGS= $(INC)
 CC=gcc $(CFLAGS)
