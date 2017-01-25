@@ -10,16 +10,41 @@ INCLUDES=\
 	include
 
 INC = $(patsubst %,-I%,$(INCLUDES))
-SOURCES=$(wildcard *.c $(SRC)/*.c )
+
+ifdef PTHREAD
+SOURCES=src/template_pthread.c
+LIBS=-lpthread
+EXECUTABLE=./bin/threadex
+endif
+
+ifdef TCPSOCKET
+SOURCES=src/template_tcpsocket.c
+LIBS=-lpthread
+EXECUTABLE=./bin/tcpsockex
+endif
+
+ifdef FILEIO
+SOURCES=src/template_fileoperations.c
+LIBS=-lpthread
+EXECUTABLE=./bin/fileioex
+endif
+
+ifdef LOOKUPTABLE
+SOURCES=src/doublelookuptable.c
+LIBS=
+EXECUTABLE=./bin/lookupex
+endif
+
+#SOURCES=$(wildcard *.c $(SRC)/*.c )
 CFLAGS= $(INC)
 CC=gcc $(CFLAGS)
 #object files
 OBJECTS=$(SOURCES:.c=.o)
 #sdl-config or any other library here.
 #``- ensures that the command between them is executed, and the result is put into LIBS
-LIBS=#`--cflags --libs`
+LIBS+=#`--cflags --libs`
 #executable filename
-EXECUTABLE=./bin/hello
+#EXECUTABLE=./bin/hello
 #Special symbols used:
 #$^ - is all the dependencies (in this case =$(OBJECTS) )
 #$@ - is the result name (in this case =$(EXECUTABLE) )
@@ -30,4 +55,6 @@ $(EXECUTABLE): $(OBJECTS)
 	$(LINK.o) $^ -o $@ $(LIBS)
 
 clean:
-	rm $(EXECUTABLE) $(OBJECTS)
+	@find . -name "*.o" -exec rm '{}' \;
+	rm -rf bin
+	mkdir bin
