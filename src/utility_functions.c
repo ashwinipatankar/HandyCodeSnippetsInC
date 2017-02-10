@@ -5,6 +5,9 @@
  *      Author: Ashwini Shankar Patankar
  */
 
+#include <stdio.h>
+#include "utility_function.h"
+
 int CharacterToInteger(char input) {
 	int out = 0;
 
@@ -19,5 +22,23 @@ int CharacterToInteger(char input) {
 		}
 	}
 	return out;
+}
+
+/*
+ * Source http://stackoverflow.com/questions/1024389/print-an-int-in-binary-representation-using-c
+ * TODO Handle unsigned/signed cases
+ */
+char *Integer2Binary(int input_number, char *buffer, int buffer_size) {
+
+
+
+	buffer += (buffer_size -1);
+
+	for (int i = 31; i >= 0; i--) {
+		*buffer-- = (input_number & 1) + '0';
+		input_number >>=1;
+	}
+
+	return buffer;
 }
 
